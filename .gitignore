@@ -1,0 +1,5 @@
+__pychache__
+/screenshot
+/logs
+.venv
+.env
