@@ -1,22 +1,18 @@
 import chromadb
-import logger
+from system import Environment
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 
 class Memory:
     _instance = None
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(Memory, cls).__new__(cls)
-            cls._instance._initialized = False
+            cls._instance._initialize(*args, **kwargs)
         return cls._instance
 
-    def __init__(self):
-        if self._initialized:
-            return
-
-        self.LOGGER = logger.LoggerSetup().get_logger()
+    def _initialize(self):
 
         # Initializing the chromaDB
         self.CHROMA_DB = chromadb.PersistentClient(path="./chroma")
@@ -24,7 +20,7 @@ class Memory:
             name="Data",
             metadata={"hnsw:space": "cosine"}
         )
-        self.LOGGER.info("Memory initialized successfully")
+        Environment.logger.info("Memory initialized successfully")
 
         # Initializing the embedding model
         self.EMBED_MODEL_NAME = "intfloat/multilingual-e5-large"
@@ -34,8 +30,8 @@ class Memory:
             query_instruction="",
             cache_folder="./models/embedding_models/"+self.EMBED_MODEL_NAME,
         )
-        self.LOGGER.info("Embedding model initialized successfully")
-
+        Environment.logger.info("Embedding model initialized successfully")
+    
 
     def queryFromDB(self, embedded_text, top_res, clause=None):
         ans = self.CHROMA_COLLECTION.query(

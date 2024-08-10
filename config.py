@@ -1,3 +1,4 @@
+# Holds all the function declaration used for function calling
 FILE_MANAGER_FUNC_DECL = [
     {
         "name": "create_file",
@@ -6,12 +7,12 @@ FILE_MANAGER_FUNC_DECL = [
             "type": "object",
             "properties": {
                 "file_path": {
-                "type": "string",
-                "description": "The path to the file to create"
+                    "type": "string",
+                    "description": "The path to the file to create"
                 },
                 "data": {
-                "type": "string",
-                "description": "The data to write to the file (optional)"
+                    "type": "string",
+                    "description": "The data to write to the file (optional)"
                 }
             },
             "required": [
@@ -26,12 +27,12 @@ FILE_MANAGER_FUNC_DECL = [
             "type": "object",
             "properties": {
                 "file_path": {
-                "type": "string",
-                "description": "The path to the file to write to"
+                    "type": "string",
+                    "description": "The path to the file to write to"
                 },
                 "content": {
-                "type": "string",
-                "description": "The content to write to the file"
+                    "type": "string",
+                    "description": "The content to write to the file"
                 }
             },
             "required": [
@@ -138,8 +139,8 @@ FILE_MANAGER_FUNC_DECL = [
             "type": "object",
             "properties": {
                 "folder_path": {
-                "type": "string",
-                "description": "The path to the folder to delete"
+                    "type": "string",
+                    "description": "The path to the folder to delete"
                 }
             },
             "required": [
@@ -148,3 +149,46 @@ FILE_MANAGER_FUNC_DECL = [
         }
     }
 ]
+
+OPERATIONS_FUNC_DECL = [
+    {
+        "name": "take_screenshot",
+        "description": "Take a screenshot of the entire screen and save it as a PNG file.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string",
+                    "description": "The name of the file to save the screenshot as (including the .png extension). If not provided, defaults to 'screenshot.png'.",
+                }
+            }
+        }
+    }
+]
+
+LLM_FUNC_DECL = [
+    {
+        "name": "sendPrompt",
+        "description": "Sends a message to the chat model, optionally including an image. Used only to gather extra information automatically",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "description": "The text message to send.",
+                },
+                "image_path": {
+                    "type": "string",
+                    "description": "The path to an image file to include with the message. (Optional, defaults to null)",
+                }
+            },
+            "required":[
+                "message"
+            ]
+        }
+    }
+]
+
+
+
+

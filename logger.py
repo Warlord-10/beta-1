@@ -1,21 +1,17 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-class LoggerSetup:
+class Logger:
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance = super(LoggerSetup, cls).__new__(cls)
-            cls._instance._initialized = False
+            cls._instance = super(Logger, cls).__new__(cls)
+            cls._instance._initialize(*args, **kwargs)
         return cls._instance
-
-
-    def __init__(self, should_log=False, log_file_path='./logs/jarvis.log'):
-        if self._initialized:
-            return
-
-        self.logger = logging.getLogger('JARVIS')
+    
+    def _initialize(self, should_log=False, log_file_path='./logs/jarvis.log'):
+        self.logger = logging.getLogger('BETA-1')
         self.logger.setLevel(logging.DEBUG)
 
         # Create formatter
@@ -34,6 +30,7 @@ class LoggerSetup:
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
 
-
     def get_logger(self):
         return self.logger
+
+MAIN_LOGGER = Logger().get_logger()

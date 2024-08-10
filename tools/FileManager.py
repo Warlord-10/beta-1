@@ -10,7 +10,7 @@ def create_file(file_path, data=None):
         if os.path.basename(file_path) == file_path:
             file_path = os.path.join(_system_.getCurrentPath(), file_path)
 
-        file = open(file_path, 'w')
+        file = open(file_path, 'w', encoding='utf-8')
         if data is not None:
             file.write(data)
         file.close()
@@ -23,7 +23,7 @@ def write_file(file_path, content):
         if os.path.basename(file_path) == file_path:
             file_path = os.path.join(_system_.getCurrentPath(), file_path)
             
-        with open(file_path, 'w') as file:
+        with open(file_path, 'w', encoding='utf-8') as file:
             file.write(content)
         return "Write successful"
     except Exception as e:
@@ -41,6 +41,9 @@ def update_file(file_path, content, position=None):
         return "Update successful"
     except Exception as e:
         return str(e)
+
+def upload_file(file_path):
+    pass
 
 def delete_file(file_path):
     try:
@@ -67,6 +70,7 @@ def list_files_and_folders(path=None):
         if path is None:
             path = _system_.getCurrentPath()
 
+        print(os.listdir(path))
         return os.listdir(path)
     except Exception as e:
         return str(e)

@@ -27,14 +27,10 @@
                     +---------------+
 """               
 
-import core
-import llm
-import logger
-import tools.operations as operations
+from core import MAIN_CORE
+from llm import MAIN_LLM
+from system import Environment
 
-MAIN_LOGGER = logger.LoggerSetup().get_logger()
-MAIN_CORE = core.Core()
-MAIN_LLM = llm.Llm()
 
 class BetaEnvironment:
     _instance = None
@@ -42,16 +38,12 @@ class BetaEnvironment:
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(BetaEnvironment, cls).__new__(cls)
-            cls._instance._initialized = False
+            cls._instance._initialize(*args, **kwargs)
         return cls._instance
 
-    def __init__(self):
-        if self._initialized:
-            return
-        
-        MAIN_LOGGER.info("Beta Environment initialized successfully")
+    def _initialize(self):
+        Environment.logger.info("Beta-1 Environment initialized successfully")
 
-        self._initialized = True
 
     def run(self):
         while True:
@@ -59,9 +51,7 @@ class BetaEnvironment:
             if prompt == "exit":
                 break
 
-            response = MAIN_LLM.getResponse(prompt)
-            print(response)
-
+            response = MAIN_LLM.sendPrompt(prompt)
 
             # Parse the response and add tasks
             for part in response.parts:
@@ -76,14 +66,17 @@ class BetaEnvironment:
                         "kwargs": kwargs
                     }
 
-                    # MAIN_CORE.addTask(function_definition)
+                    MAIN_CORE.addTask(function_definition)
                 elif fn := part.text:
                     print(fn.format())
 
 
 
 if __name__ == "__main__":
+    # COMPLETED: file management
+    # TODO: 
     mainObj = BetaEnvironment()
     mainObj.run()
 
+    pass
 
