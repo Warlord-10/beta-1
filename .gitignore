@@ -1,5 +1,11 @@
+# Folders
 __pycache__
-/screenshot
-/logs
+screenshot
+logs
+audio
+models
+
+# Files
 .venv
 .env
+.vscode

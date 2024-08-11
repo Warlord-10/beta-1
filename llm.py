@@ -11,6 +11,7 @@ import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from PIL import Image
 from system import Environment
+import os
 from config import (
     FILE_MANAGER_FUNC_DECL,
     OPERATIONS_FUNC_DECL,
@@ -25,11 +26,11 @@ class Llm:
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(Llm, cls).__new__(cls)
-            cls._instance._initialize(*args, **kwargs)
+            cls._instance._initialize(cls, *args, **kwargs)
         return cls._instance
     
     def _initialize(self):
-        genai.configure(api_key="AIzaSyBj5Y8YUwT1oa-JNJLkYN3jTR6eA-dORbY")
+        genai.configure(api_key=os.environ.get("GEMINI_API"))
 
         generation_config = {
             "temperature": 1,
@@ -43,7 +44,6 @@ class Llm:
             HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
             HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
             HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            # HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
         }
 
         self.model = genai.GenerativeModel(
@@ -82,6 +82,10 @@ class Llm:
             enable_automatic_function_calling=False
         )
         Environment.logger.info("LLM initialized successfully")
+
+    def takeTextInput(self):
+        prompt = input("Prompt: ")
+        return prompt
 
     # Main functions for interacting with the model
     def generateContent(self, message):

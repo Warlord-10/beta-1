@@ -38,7 +38,7 @@ class BetaEnvironment:
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(BetaEnvironment, cls).__new__(cls)
-            cls._instance._initialize(*args, **kwargs)
+            cls._instance._initialize(cls, *args, **kwargs)
         return cls._instance
 
     def _initialize(self):
@@ -47,7 +47,7 @@ class BetaEnvironment:
 
     def run(self):
         while True:
-            prompt = input("Prompt: ")
+            prompt = MAIN_LLM.takeTextInput()
             if prompt == "exit":
                 break
 
