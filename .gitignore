@@ -4,6 +4,8 @@ screenshot
 logs
 audio
 models
+chroma_storage
+storage
 
 # Files
 .venv

@@ -10,13 +10,9 @@ https://ai.google.dev/gemini-api/docs/get-started/python
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from PIL import Image
-from system import Environment
+from modules.system import Environment
 import os
-from config import (
-    FILE_MANAGER_FUNC_DECL,
-    OPERATIONS_FUNC_DECL,
-    LLM_FUNC_DECL
-)
+from config import *
 
 
 # Actual llm class
@@ -26,7 +22,7 @@ class Llm:
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(Llm, cls).__new__(cls)
-            cls._instance._initialize(cls, *args, **kwargs)
+            cls._instance._initialize(*args, **kwargs)
         return cls._instance
     
     def _initialize(self):
@@ -67,7 +63,7 @@ class Llm:
             """,
 
             tools=[{
-                "function_declarations": FILE_MANAGER_FUNC_DECL+OPERATIONS_FUNC_DECL+LLM_FUNC_DECL
+                "function_declarations": FILE_MANAGER_FUNC_DECL + OPERATIONS_FUNC_DECL+LLM_FUNC_DECL + MEMORY_FUNC_DECL
             }],
 
             tool_config={
@@ -97,7 +93,7 @@ class Llm:
             response = self.CHAT_SESSION.send_message(message)
         else:
             response = self.CHAT_SESSION.send_message([message,Image.open(image_path)])
-        print(response)
+        # print(response)
         return response
     
 MAIN_LLM = Llm()

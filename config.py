@@ -167,24 +167,79 @@ OPERATIONS_FUNC_DECL = [
 ]
 
 LLM_FUNC_DECL = [
+    # {
+    #     "name": "send_information_to_LLM",
+    #     "description": "Sends a prompt to the main LLM for processing.",
+    #     "parameters": {
+    #         "type": "object",
+    #         "properties": {
+    #             "prompt": {
+    #             "type": "string",
+    #             "description": "The prompt to send to the LLM."
+    #             }
+    #         },
+    #         "required": [
+    #             "prompt"
+    #         ]
+    #     }
+    # },
     {
-        "name": "sendPrompt",
-        "description": "Sends a message to the chat model, optionally including an image. Used only to gather extra information automatically",
+        "name": "analyze_screen",
+        "description": "Takes a screenshot and sends it to the main LLM for analysis."
+    }
+]
+
+MEMORY_FUNC_DECL =[
+    {
+        "name": "insertTextToKnowledgeBase",
+        "description": "Inserts a text string into the Chroma database and updates the LlamaIndex index.",
         "parameters": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "description": "The text message to send.",
-                },
-                "image_path": {
-                    "type": "string",
-                    "description": "The path to an image file to include with the message. (Optional, defaults to null)",
-                }
-            },
-            "required":[
-                "message"
-            ]
+        "type": "object",
+        "properties": {
+            "text": {
+            "type": "string",
+            "description": "The text string to insert."
+            }
+        },
+        "required": [
+            "text"
+        ]
+        }
+    },
+    {
+        "name": "insertDocumentToKnowledgeBase",
+        "description": "Inserts a document from a file path into the Chroma database and updates the LlamaIndex index.",
+        "parameters": {
+        "type": "object",
+        "properties": {
+            "file_path": {
+            "type": "string",
+            "description": "The path to the document file."
+            }
+        },
+        "required": [
+            "file_path"
+        ]
+        }
+    },
+    {
+        "name": "clearKnowledgeBase",
+        "description": "Clears the Chroma vector store and persists the changes to the LlamaIndex index."
+    },
+    {
+        "name": "queryKnowledgeBase",
+        "description": "Queries the LlamaIndex index using the provided query string.",
+        "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+            "type": "string",
+            "description": "The query string to use for retrieval."
+            }
+        },
+        "required": [
+            "query"
+        ]
         }
     }
 ]

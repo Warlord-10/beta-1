@@ -1,7 +1,7 @@
 import pyautogui
-import logger
+import modules.logger as logger
 
-from system import Environment
+from modules.system import Environment
 
 # Set a small pause between PyAutoGUI commands for stability
 pyautogui.PAUSE = 0.1

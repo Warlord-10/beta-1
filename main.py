@@ -27,9 +27,9 @@
                     +---------------+
 """               
 
-from core import MAIN_CORE
-from llm import MAIN_LLM
-from system import Environment
+from modules.core import MAIN_CORE
+from modules.llm import MAIN_LLM
+from modules.system import Environment
 
 
 class BetaEnvironment:
@@ -38,7 +38,7 @@ class BetaEnvironment:
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(BetaEnvironment, cls).__new__(cls)
-            cls._instance._initialize(cls, *args, **kwargs)
+            cls._instance._initialize(*args, **kwargs)
         return cls._instance
 
     def _initialize(self):

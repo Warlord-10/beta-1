@@ -1,10 +1,10 @@
 import os
-import wave
 import pyaudio
 import struct
 import speech_recognition as sr
 import threading
-from logger import MAIN_LOGGER
+# from modules.logger import MAIN_LOGGER
+# from modules.llm import MAIN_LLM
 from groq import Groq
 import pvporcupine
 

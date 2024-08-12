@@ -3,13 +3,19 @@ import queue
 import inspect
 import uuid
 
-from system import Environment
+from modules.system import Environment
+from modules.memory import MAIN_MEMORY as MemoryTools
 
 import tools.FileManager as FileManagerTools
 import tools.Operations as OperationsTools
-from llm import MAIN_LLM as LlmTools
+import tools.InformationProvider as LlmTools
 
-
+modules_and_classes = [
+    FileManagerTools,
+    OperationsTools,
+    LlmTools,
+    MemoryTools
+]
 
 
 # Used for managing the tasks, and executing them
@@ -19,7 +25,7 @@ class Core:
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(Core, cls).__new__(cls)
-            cls._instance._initialize(cls, *args, **kwargs)
+            cls._instance._initialize(*args, **kwargs)
         return cls._instance
 
      # Private functions
@@ -36,11 +42,6 @@ class Core:
 
     def _loadFunctions(self):
         functions_dict = {}
-        modules_and_classes = [
-            FileManagerTools,
-            OperationsTools,
-            LlmTools
-        ]
 
         for item in modules_and_classes:
             if inspect.ismodule(item):
@@ -76,7 +77,7 @@ class Core:
             self.taskExecutionSignal.clear()
 
     def _executeTask(self, task):
-        # print("Executing task: ", task["id"], task["fn_name"])
+        print("Executing task: ", task["id"], task["fn_name"])
         curr_task_name = task["fn_name"]
         curr_task_kwargs = task["kwargs"]
 

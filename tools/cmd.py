@@ -1,18 +1,19 @@
 import subprocess
 
 class CommandLine:
-    _instace = None
+    _instance = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(CommandLine, cls).__new__(cls)
-            cls._instance._initialized = False
+            cls._instance._initialize(*args, **kwargs)
         return cls._instance
 
-    def init(self):
-        if self._initialized:
-            return
-        
-        self.cmd = subprocess.Popen('powershell.exe', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    def _initialize(self):
+        pass
 
-        self._initialized = True
+
+MAIN_CMD = CommandLine()
+
+if __name__ == "__main__":
+    MAIN_CMD = CommandLine()

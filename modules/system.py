@@ -1,4 +1,4 @@
-from logger import MAIN_LOGGER
+from modules.logger import MAIN_LOGGER
 
 # Holds the system information
 class System:
