@@ -1,9 +1,15 @@
-from modules.llm import MAIN_LLM
+from modules.system import System
 from tools.Operations import take_screenshot
 
 # def send_information_to_LLM(prompt):
-#     MAIN_LLM.sendPrompt(prompt)
+#     response = MAIN_LLM.sendPrompt(prompt)
+#     return response.text
+
+
+Environment = System()
 
 def analyze_screen():
     take_screenshot()
-    MAIN_LLM.sendPrompt(message="Here is the screen for analysis", image_path="screenshot/screenshot.png")
+    response = Environment.MAIN_LLM.sendPrompt(message="Here is the screen for analysis", image_path="screenshot/screenshot.png")
+    print(response.text)
+    return response.text

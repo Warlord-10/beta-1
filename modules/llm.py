@@ -1,21 +1,15 @@
-"""
-Install the Google AI Python SDK
-
-$ pip install google-generativeai
-
-See the getting started guide for more information:
-https://ai.google.dev/gemini-api/docs/get-started/python
-"""
-
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from PIL import Image
-from modules.system import Environment
 import os
+import google.generativeai as genai
+
 from config import *
+from PIL import Image
+from groq import Groq
+from modules.logger import MAIN_LOGGER
+from modules.event_dispatcher import EventDispatcher
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 
-# Actual llm class
+# Base LLM class
 class Llm:
     _instance = None
 
@@ -24,15 +18,36 @@ class Llm:
             cls._instance = super(Llm, cls).__new__(cls)
             cls._instance._initialize(*args, **kwargs)
         return cls._instance
-    
+
     def _initialize(self):
+        self.system_prompt = """
+            Your name is Beta-1
+            - As a smart assistant, you are given lots of APIs to control the computer and complete the task. 
+            - If you face any doubt, feel free to ask the user for it. While executing a function, if you need extra details from me, just ASK.
+            - Remember to always provide the reason for chosing the API. 
+        """
+        self.tools = FILE_MANAGER_FUNC_DECL + OPERATIONS_FUNC_DECL + LLM_FUNC_DECL + MEMORY_FUNC_DECL + BROWSER_FUNC_DECL
+        self.dispatcher = EventDispatcher()
+
+    def takeTextInput(self):
+        prompt = input("Prompt: ")
+        return prompt
+
+    def sendPrompt(self, message, image_path=None):
+        # To be overridden by subclasses
+        raise NotImplementedError("sendPrompt method must be overridden by subclass")
+
+# Google Gemini LLM class
+class GoogleLLM(Llm):
+    def _initialize(self):
+        super()._initialize()
         genai.configure(api_key=os.environ.get("GEMINI_API"))
 
         generation_config = {
             "temperature": 1,
             "top_p": 0.95,
             "top_k": 64,
-            "max_output_tokens": 8192,
+            "max_output_tokens": 4096,
             "response_mime_type": "text/plain"
         }
         safety_settings = {
@@ -46,24 +61,10 @@ class Llm:
             model_name="gemini-1.5-pro",
             generation_config=generation_config,
             safety_settings=safety_settings,
-            system_instruction="""
-                Your name is Beta-1
-                
-                - As a smart assistant, you are given lots of APIs to control the computer. 
-                
-                - Your role is to analyze the objective and then divide it into subtasks which can be completed by a single API calls. Then combine all the API calls to complete the whole objective.
-
-                - Your approach must follow the divide and conquer approach towards the objective.
-                
-                - sendPrompt function must be called ONLY when the model requires extra data from the machine. This must not be used for regular answer generation.
-
-                - If you face any doubt, feel free to ask the user for it.
-                - Return the array of function calls you need to make to finish the objective.
-                - Remember to always provide the reason for chosing the API. 
-            """,
+            system_instruction=self.system_prompt,
 
             tools=[{
-                "function_declarations": FILE_MANAGER_FUNC_DECL + OPERATIONS_FUNC_DECL+LLM_FUNC_DECL + MEMORY_FUNC_DECL
+                "function_declarations": self.tools
             }],
 
             tool_config={
@@ -71,43 +72,70 @@ class Llm:
             }
         )
 
-        # print(self.model._tools.to_proto())
-
         self.CHAT_SESSION = self.model.start_chat(
             history=[], 
             enable_automatic_function_calling=False
         )
-        Environment.logger.info("LLM initialized successfully")
-
-    def takeTextInput(self):
-        prompt = input("Prompt: ")
-        return prompt
-
-    # Main functions for interacting with the model
-    def generateContent(self, message):
-        response = self.model.generate_content([message, Image.open("screenshot/screenshot.png")])
-        return response
+        MAIN_LOGGER.info("Gemini LLM initialized successfully")
 
     def sendPrompt(self, message, image_path=None):
         if image_path is None:
             response = self.CHAT_SESSION.send_message(message)
         else:
-            response = self.CHAT_SESSION.send_message([message,Image.open(image_path)])
-        # print(response)
-        return response
-    
-MAIN_LLM = Llm()
+            response = self.CHAT_SESSION.send_message([message, Image.open(image_path)])
 
+        self.dispatcher.publish('LLM_RESPONSE', response)
+        return response
+
+
+# Groq LLM class inheriting from Llm
+class GroqLLM(Llm):
+    def _initialize(self):
+        super()._initialize()
+        self.model = Groq(api_key=os.environ.get("GROQ_API"))
+
+        MAIN_LOGGER.info("Gorq LLM initialized successfully")
+
+    def sendPrompt(self, message):
+        response = self.model.chat.completions.create(
+            model="gemma2-9b-it",
+            messages=[
+                {
+                    "role": "system",
+                    "content": self.system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": message,
+                }
+            ],
+            # tools=[FILE_MANAGER_FUNC_DECL + OPERATIONS_FUNC_DECL + LLM_FUNC_DECL + MEMORY_FUNC_DECL],
+            # tool_choice="auto",
+            max_tokens=4096
+        )
+
+        response_message = response.choices[0].message
+        tool_calls = response_message.tool_calls
+
+        self.dispatcher.publish('LLM_RESPONSE', response_message)
+        # print(response_message.content)
+        # print(response_message)
+        
 
 
 if __name__ == "__main__":
-    MAIN_LLM = Llm()
+    llm_choice = input("Choose LLM (1 for Google, 2 for Groq): ")
+    if llm_choice == "1":
+        MAIN_LLM = GoogleLLM()
+    elif llm_choice == "2":
+        MAIN_LLM = GroqLLM()
+    else:
+        print("Invalid choice, exiting.")
+        exit(1)
+
     while True:
         prompt = input("Prompt: ")
-        if prompt == "exit":
+        if prompt.lower() == "exit":
             break
-
-        # Take the screenshot
-        # operations.take_screenshot()
 
         response = MAIN_LLM.sendPrompt(prompt)

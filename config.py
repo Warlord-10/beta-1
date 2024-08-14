@@ -151,19 +151,19 @@ FILE_MANAGER_FUNC_DECL = [
 ]
 
 OPERATIONS_FUNC_DECL = [
-    {
-        "name": "take_screenshot",
-        "description": "Take a screenshot of the entire screen and save it as a PNG file.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "filename": {
-                    "type": "string",
-                    "description": "The name of the file to save the screenshot as (including the .png extension). If not provided, defaults to 'screenshot.png'.",
-                }
-            }
-        }
-    }
+    # {
+    #     "name": "take_screenshot",
+    #     "description": "Take a screenshot of the entire screen and save it as a PNG file.",
+    #     "parameters": {
+    #         "type": "object",
+    #         "properties": {
+    #             "filename": {
+    #                 "type": "string",
+    #                 "description": "The name of the file to save the screenshot as (including the .png extension). If not provided, defaults to 'screenshot.png'.",
+    #             }
+    #         }
+    #     }
+    # }
 ]
 
 LLM_FUNC_DECL = [
@@ -189,10 +189,10 @@ LLM_FUNC_DECL = [
     }
 ]
 
-MEMORY_FUNC_DECL =[
+MEMORY_FUNC_DECL = [
     {
-        "name": "insertTextToKnowledgeBase",
-        "description": "Inserts a text string into the Chroma database and updates the LlamaIndex index.",
+        "name": "saveTextToMemory",
+        "description": "Saves the text into LLM's Memory(Brain).",
         "parameters": {
         "type": "object",
         "properties": {
@@ -207,8 +207,8 @@ MEMORY_FUNC_DECL =[
         }
     },
     {
-        "name": "insertDocumentToKnowledgeBase",
-        "description": "Inserts a document from a file path into the Chroma database and updates the LlamaIndex index.",
+        "name": "saveDocumentToMemory",
+        "description": "Saves a document into the LLM's Memory(Brain).",
         "parameters": {
         "type": "object",
         "properties": {
@@ -223,12 +223,12 @@ MEMORY_FUNC_DECL =[
         }
     },
     {
-        "name": "clearKnowledgeBase",
-        "description": "Clears the Chroma vector store and persists the changes to the LlamaIndex index."
+        "name": "clearMemory",
+        "description": "Forgets everything, thus empties the Memory."
     },
     {
-        "name": "queryKnowledgeBase",
-        "description": "Queries the LlamaIndex index using the provided query string.",
+        "name": "queryMemory",
+        "description": "Fetches data from the Memory.",
         "parameters": {
         "type": "object",
         "properties": {
@@ -244,6 +244,40 @@ MEMORY_FUNC_DECL =[
     }
 ]
 
+BROWSER_FUNC_DECL = [
+    {
+        "name": "open_browser",
+        "description": "Opens a web browser and performs a Google search using the provided query.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            "search_query": {
+                "type": "string",
+                "description": "The search query to be used for the Google search."
+            }
+            },
+            "required": [
+            "search_query"
+            ]
+        }
+    },
+    {
+        "name": "get_search_result",
+        "description": "Retrieves Google search results for the given query and returns a dictionary of titles and corresponding URLs.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            "query": {
+                "type": "string",
+                "description": "The query string to use for retrieval of search results."
+            }
+            },
+            "required": [
+            "query"
+            ]
+        }
+    }
+]
 
 
 

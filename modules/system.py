@@ -1,4 +1,3 @@
-from modules.logger import MAIN_LOGGER
 
 # Holds the system information
 class System:
@@ -10,12 +9,17 @@ class System:
         return cls._instance
 
     def _initialize(self):  
+        self.MAIN_LLM = None
+        self.MAIN_MEMORY = None
 
-        self.logger = MAIN_LOGGER
         self.screenshot_path = "./screenshot/screenshot.png"
         self.curr_path = "C:/Users/deepa/Desktop"
         self.last_prompt = None
 
+    def setLLMModel(self, model):
+        self.MAIN_LLM = model
+    def setMemory(self, memory):
+        self.MAIN_MEMORY = memory
 
     def getLastPrompt(self):
         return self.last_prompt

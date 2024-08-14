@@ -3,10 +3,14 @@ import pyaudio
 import struct
 import speech_recognition as sr
 import threading
-# from modules.logger import MAIN_LOGGER
-# from modules.llm import MAIN_LLM
 from groq import Groq
 import pvporcupine
+from transformers import pipeline
+import soundfile as sf
+from modules.logger import MAIN_LOGGER
+
+from datasets import load_dataset
+import torch
 
 class Speech:
     _instance = None
@@ -18,6 +22,14 @@ class Speech:
         return cls._instance
 
     def _initialize(self, is_background_mic=False):
+        # For text to speech
+        self.synthesiser = pipeline("text-to-speech", "microsoft/speecht5_tts")
+        embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation")
+        self.speaker_embedding = torch.tensor(embeddings_dataset[7306]["xvector"]).unsqueeze(0)
+        MAIN_LOGGER.info("Text-to-Speech initialized successfully")
+
+
+        # For speech to text
         self.client = Groq(api_key=os.environ.get("GROQ_API"))
         self.porcupine = pvporcupine.create(
             access_key=os.environ.get("PICOVOICE_API"), 
@@ -47,6 +59,8 @@ class Speech:
         self.listening_event = threading.Event()
         self.listening_event.set()  # Start with listening enabled
         self.listen_thread = threading.Thread(target=self._backgroundMic)
+        MAIN_LOGGER.info("Speech-to-Text initialized successfully")
+
         if is_background_mic == True:
             self._startThreads()
 
@@ -72,7 +86,6 @@ class Speech:
     def speechToText(self):
         self.listening_event.clear()  # Pause background listening
 
-
         print("Say Something: ")
         with self.microphone as source:
             audio = self.recognizer.listen(source, phrase_time_limit=3)
@@ -95,9 +108,34 @@ class Speech:
         self.listening_event.set()  # Resume background listening
         return transcription
         
+    def speak(self, text):
+        speech = self.synthesiser(str(text), forward_params={"speaker_embeddings": self.speaker_embedding})
 
+        # sf.write("audio/speech.wav", speech["audio"], samplerate=speech["sampling_rate"])
+        audio_data = speech["audio"]
+        sampling_rate = speech["sampling_rate"]
+
+        # Initialize PyAudio
+        p = pyaudio.PyAudio()
+
+        # Open a stream with the correct parameters
+        stream = p.open(format=pyaudio.paFloat32,
+                        channels=1,
+                        rate=sampling_rate,
+                        output=True)
+
+        # Play the audio by writing the data to the stream
+        stream.write(audio_data.astype('float32').tobytes())
+
+        # Stop and close the stream
+        stream.stop_stream()
+        stream.close()
+
+        # Terminate the PyAudio object
+        p.terminate()
 
 MAIN_SPEECH = Speech()
+
 
 if __name__ == "__main__":
     MAIN_SPEECH = Speech(is_background_mic=False)

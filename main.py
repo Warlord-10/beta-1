@@ -1,35 +1,10 @@
-"""
-        +-----------------------+
-        |      Environment      |
-        |  (Entry Point & Main  |
-        |  Coordinator)         |
-        +-----------------------+
-            |          |          \
-            |          |           \
-            |          |            \
-        +------+    +------+     +---------+
-        | Core |    | LLM  |     |  OS     |
-        |      |    |      |     |         |
-        +------+    +------+     +---------+
-            |           |            
-            |           |            
-            |           |            
-        +-----------+   |            
-        | Task Queue|   |            
-        | (in Core) |   |            
-        +-----------+   |            
-                        |           
-                        |            
-                        v            
-                    +---------------+
-                    |  Memory       |
-                    |  Module       |
-                    +---------------+
-"""               
 
-from modules.core import MAIN_CORE
-from modules.llm import MAIN_LLM
-from modules.system import Environment
+from modules.core import Core
+from modules.llm import GroqLLM, GoogleLLM
+from modules.logger import MAIN_LOGGER
+from modules.system import System
+from modules.memory import KnowledgeBase
+
 
 
 class BetaEnvironment:
@@ -42,33 +17,27 @@ class BetaEnvironment:
         return cls._instance
 
     def _initialize(self):
-        Environment.logger.info("Beta-1 Environment initialized successfully")
+        # llm = GoogleLLM()
+        llm = GroqLLM()
+        mem = KnowledgeBase()
+
+        self.Environment = System()
+        self.Environment.setLLMModel(llm)
+        self.Environment.setMemory(mem)
+        core = Core()
+
+        MAIN_LOGGER.info("Beta-1 Environment initialized successfully")
 
 
     def run(self):
         while True:
-            prompt = MAIN_LLM.takeTextInput()
+            # prompt = MAIN_LLM.takeTextInput()
+            prompt = input("Prompt: ")
             if prompt == "exit":
                 break
 
-            response = MAIN_LLM.sendPrompt(prompt)
-
-            # Parse the response and add tasks
-            for part in response.parts:
-                if fn := part.function_call:
-                    
-                    kwargs = {}
-                    for key, val in fn.args.items():
-                        kwargs[key] = val
-
-                    function_definition = {
-                        "fn_name": fn.name,
-                        "kwargs": kwargs
-                    }
-
-                    MAIN_CORE.addTask(function_definition)
-                elif fn := part.text:
-                    print(fn.format())
+            response = self.Environment.MAIN_LLM.sendPrompt(prompt)
+            
 
 
 
