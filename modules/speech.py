@@ -12,6 +12,8 @@ from modules.logger import MAIN_LOGGER
 from datasets import load_dataset
 import torch
 
+from modules.system import Environment
+
 class Speech:
     _instance = None
 
@@ -23,8 +25,11 @@ class Speech:
 
     def _initialize(self, is_background_mic=False):
         # For text to speech
-        self.synthesiser = pipeline("text-to-speech", "microsoft/speecht5_tts")
-        embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation")
+        self.SPEECH_MODEL_NAME = "microsoft/speecht5_tts"
+        self.synthesiser = pipeline("text-to-speech", self.SPEECH_MODEL_NAME)
+        self.synthesiser.save_pretrained(save_directory="./models/speech_models/"+self.SPEECH_MODEL_NAME)
+
+        embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation", cache_dir="./models/speech_dataset/"+self.SPEECH_MODEL_NAME)
         self.speaker_embedding = torch.tensor(embeddings_dataset[7306]["xvector"]).unsqueeze(0)
         MAIN_LOGGER.info("Text-to-Speech initialized successfully")
 
@@ -52,7 +57,7 @@ class Speech:
 
         self.recognizer = sr.Recognizer()
         self.recognizer.energy_threshold = 4000
-        self.recognizer.pause_threshold = 3
+        self.recognizer.pause_threshold = 2
         self.recognizer.dynamic_energy_threshold = True
 
 
@@ -63,6 +68,9 @@ class Speech:
 
         if is_background_mic == True:
             self._startThreads()
+
+        MAIN_LOGGER.info("Speech initialized successfully")
+
 
     def _startThreads(self):
         print("Starting background mic")
@@ -84,55 +92,63 @@ class Speech:
                 
 
     def speechToText(self):
-        self.listening_event.clear()  # Pause background listening
+        try:
+            self.listening_event.clear()  # Pause background listening
+            print("Say Something: ")
+            with self.microphone as source:
+                audio = self.recognizer.listen(source, timeout=1)
+                print("Done")
 
-        print("Say Something: ")
-        with self.microphone as source:
-            audio = self.recognizer.listen(source, phrase_time_limit=3)
-            print("Done")
+            # with open(filename, "wb") as f:
+                #f.write(audio.get_wav_data())
+            
+            transcription = self.client.audio.transcriptions.create(
+                file=(".wav", audio.get_wav_data()),
+                model="whisper-large-v3",
+                # prompt="Specify context or spelling",  # Optional
+                response_format="text",  # Optional
+                language="en",  # Optional
+                temperature=0.0  # Optional
+            )
+            print(transcription)
+            return transcription
+        except:
+            print("Error in listenings")
+        finally:
+            self.listening_event.set()  # Resume background listening
 
-        # with open(filename, "wb") as f:
-            #f.write(audio.get_wav_data())
-        
-        transcription = self.client.audio.transcriptions.create(
-            file=(".wav", audio.get_wav_data()),
-            model="whisper-large-v3",
-            # prompt="Specify context or spelling",  # Optional
-            response_format="text",  # Optional
-            language="en",  # Optional
-            temperature=0.0  # Optional
-        )
-        print(transcription)
-
-
-        self.listening_event.set()  # Resume background listening
-        return transcription
         
     def speak(self, text):
-        speech = self.synthesiser(str(text), forward_params={"speaker_embeddings": self.speaker_embedding})
+        try:
+            if len(text) > 512 or Environment.should_speak == False: return
+            
+            speech = self.synthesiser(str(text), forward_params={"speaker_embeddings": self.speaker_embedding})
 
-        # sf.write("audio/speech.wav", speech["audio"], samplerate=speech["sampling_rate"])
-        audio_data = speech["audio"]
-        sampling_rate = speech["sampling_rate"]
+            # sf.write("audio/speech.wav", speech["audio"], samplerate=speech["sampling_rate"])
+            audio_data = speech["audio"]
+            sampling_rate = speech["sampling_rate"]
 
-        # Initialize PyAudio
-        p = pyaudio.PyAudio()
+            # Initialize PyAudio
+            p = pyaudio.PyAudio()
 
-        # Open a stream with the correct parameters
-        stream = p.open(format=pyaudio.paFloat32,
-                        channels=1,
-                        rate=sampling_rate,
-                        output=True)
+            # Open a stream with the correct parameters
+            stream = p.open(format=pyaudio.paFloat32,
+                            channels=1,
+                            rate=sampling_rate,
+                            output=True)
 
-        # Play the audio by writing the data to the stream
-        stream.write(audio_data.astype('float32').tobytes())
+            # Play the audio by writing the data to the stream
+            stream.write(audio_data.astype('float32').tobytes())
 
-        # Stop and close the stream
-        stream.stop_stream()
-        stream.close()
+            # Stop and close the stream
+            stream.stop_stream()
+            stream.close()
 
-        # Terminate the PyAudio object
-        p.terminate()
+            # Terminate the PyAudio object
+            p.terminate()
+        
+        except Exception as e:
+            pass
 
 MAIN_SPEECH = Speech()
 

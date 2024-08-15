@@ -1,7 +1,6 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-import sys
 
 
 
@@ -9,6 +8,7 @@ import sys
 def open_browser(search_query):
     url = f"https://www.google.com/search?q={search_query}"
     os.system(f"start {url}")
+    return "Browser opened"
 
 def get_search_result(query):
     url = f"https://www.google.com/search?q={query}"
@@ -28,7 +28,7 @@ def get_search_result(query):
             results[title.text] = link["href"]
 
     print(results)
-    return results
+    return str(results)
 
 
 if __name__ == "__main__":

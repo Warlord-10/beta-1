@@ -61,24 +61,38 @@ class KnowledgeBase:
         return self.EMBED_MODEL.parse_file(file_path)
 
     def saveTextToMemory(self, text):
-        doc = Document(text=text)
-        self.INDEX.insert(doc)
-        self.INDEX.storage_context.persist()
+        try:
+            doc = Document(text=text)
+            self.INDEX.insert(doc)
+            self.INDEX.storage_context.persist()
+            return "Text saved."
+        except:
+            return "Error in saving text."
 
     def saveDocumentToMemory(self, file_path):
-        docs = SimpleDirectoryReader(input_files=[file_path]).load_data(show_progress=True)
-        for doc in docs:
-            self.INDEX.insert(doc)
-        self.INDEX.storage_context.persist()
+        try:
+            docs = SimpleDirectoryReader(input_files=[file_path]).load_data(show_progress=True)
+            for doc in docs:
+                self.INDEX.insert(doc)
+            self.INDEX.storage_context.persist()
+            return "Document saved."
+        except:
+            return "Error in saving document."
 
     def clearMemory(self):
-        self.VECTOR_STORE.clear()
-        self.INDEX.storage_context.persist()
+        try:
+            self.VECTOR_STORE.clear()
+            self.INDEX.storage_context.persist()
+            return "Memory cleared."
+        except:
+            return "Error in clearing memory."
     
     def queryMemory(self, query):
-        response = self.QUERY_ENGINE.query(query)
-        print(response)
-        return response 
+        try:
+            response = self.QUERY_ENGINE.query(query)
+            return response
+        except:
+            return "Error in querying memory."
         
 
 if __name__ == "__main__":

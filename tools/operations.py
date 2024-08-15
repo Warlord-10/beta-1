@@ -15,35 +15,37 @@ def move_mouse(x_percent, y_percent) -> None:
         x = int(screen_width * x_percent)
         y = int(screen_height * y_percent)
         pyautogui.moveTo(x, y)
+        return "mouse moved"
     except Exception as e:
-        return
+        return str(e)
     
 def click_mouse(x, y) -> None:
     """Click the mouse at the current position or specified coordinates."""
     try:
         if x is not None and y is not None:
             pyautogui.click(x, y)
-            Environment.logger.info(f"Clicked mouse at position ({x}, {y})")
         else:
             pyautogui.click()
+            return "mouse clicked"
     except Exception as e:
-        return
+        return str(e)
     
 def type_text(text) -> None:
     """Type the specified text."""
     try:
         pyautogui.typewrite(text)
+        return "text typed"
     except Exception as e:
-        return 
+        return str(e)
     
 def press_key(key) -> None:
     """Press the specified key."""
     try:
         pyautogui.press(key)
+        return "key pressed"
     except Exception as e:
-        return
-
-
+        return str(e)
+    
 def take_screenshot(filename=None):
     """Take a screenshot of the entire screen."""
     try:
@@ -53,19 +55,9 @@ def take_screenshot(filename=None):
         screenshot = pyautogui.screenshot()
         screenshot.save("screenshot/" + filename)
 
-        return filename
+        return f"screenshot taken, file name: {filename}"
     except Exception as e:
-        return None
-
-def take_region_screenshot(region:tuple[int, int, int, int], filename:str="screenshot.png") -> None:
-    """Take a screenshot of a specific region."""
-    try:
-        screenshot = pyautogui.screenshot(region=region)
-        screenshot.save("screenshot/" + filename)
-
-        return filename
-    except Exception as e:
-        return None
+        return str(e)
 
 
 # Example usage
@@ -75,4 +67,3 @@ if __name__ == "__main__":
     type_text("Hello, JARVIS!")
     press_key('enter')
     take_screenshot()
-    take_region_screenshot((0, 0, 300, 300), "region_shot.png")

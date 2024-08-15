@@ -22,11 +22,13 @@ class Llm:
     def _initialize(self):
         self.system_prompt = """
             Your name is Beta-1
-            - As a smart assistant, you are given lots of APIs to control the computer and complete the task. 
+            - As a smart assistant, you are given lots of APIs to control the computer and complete the task.
+            - Given a task call the appropiate API to complete the task. 
             - If you face any doubt, feel free to ask the user for it. While executing a function, if you need extra details from me, just ASK.
             - Remember to always provide the reason for chosing the API. 
         """
-        self.tools = FILE_MANAGER_FUNC_DECL + OPERATIONS_FUNC_DECL + LLM_FUNC_DECL + MEMORY_FUNC_DECL + BROWSER_FUNC_DECL
+        self.max_tokens = 2048
+        self.tools = FILE_MANAGER_FUNC_DECL + OPERATIONS_FUNC_DECL + LLM_FUNC_DECL + MEMORY_FUNC_DECL + BROWSER_FUNC_DECL + PATH_FUNC_DECL + SETTINGS_FUNC_DECL
         self.dispatcher = EventDispatcher()
 
     def takeTextInput(self):
@@ -47,7 +49,7 @@ class GoogleLLM(Llm):
             "temperature": 1,
             "top_p": 0.95,
             "top_k": 64,
-            "max_output_tokens": 4096,
+            "max_output_tokens": self.max_tokens,
             "response_mime_type": "text/plain"
         }
         safety_settings = {
@@ -94,32 +96,38 @@ class GroqLLM(Llm):
         super()._initialize()
         self.model = Groq(api_key=os.environ.get("GROQ_API"))
 
+        temp = []
+        for i in self.tools:
+            temp.append({
+                "type": "function", "function": i
+            })
+        self.tools = temp
+        self.messages = [{
+            "role": "system",
+            "content": self.system_prompt
+        }]
+
+
         MAIN_LOGGER.info("Gorq LLM initialized successfully")
 
-    def sendPrompt(self, message):
+    def sendPrompt(self, message=None):
+        if message:
+            self.messages.append({
+                "role": "user",
+                "content": message,
+            })
+
         response = self.model.chat.completions.create(
-            model="gemma2-9b-it",
-            messages=[
-                {
-                    "role": "system",
-                    "content": self.system_prompt
-                },
-                {
-                    "role": "user",
-                    "content": message,
-                }
-            ],
-            # tools=[FILE_MANAGER_FUNC_DECL + OPERATIONS_FUNC_DECL + LLM_FUNC_DECL + MEMORY_FUNC_DECL],
-            # tool_choice="auto",
-            max_tokens=4096
+            model="llama3-groq-8b-8192-tool-use-preview",
+            parallel_tool_calls=True,
+            tool_choice="auto",
+            messages=self.messages,
+            tools=self.tools,
+            max_tokens=self.max_tokens
         )
 
-        response_message = response.choices[0].message
-        tool_calls = response_message.tool_calls
-
-        self.dispatcher.publish('LLM_RESPONSE', response_message)
-        # print(response_message.content)
-        # print(response_message)
+        self.dispatcher.publish('LLM_RESPONSE', response)
+        return response
         
 
 

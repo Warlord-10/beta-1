@@ -1,3 +1,4 @@
+import json
 import threading
 import queue
 import inspect
@@ -5,24 +6,28 @@ import uuid
 
 from modules.logger import MAIN_LOGGER
 from modules.speech import MAIN_SPEECH
+
 from modules.event_dispatcher import EventDispatcher
-from modules.llm import GroqLLM
+from modules.llm import GoogleLLM, GroqLLM
 
 # Importing all the tools
-from modules.memory import KnowledgeBase
 from modules.system import Environment
 
 import tools.FileManager as FileManagerTools
 import tools.Operations as OperationsTools
 import tools.InformationProvider as LlmTools
 import tools.browser as BrowserTools
+import tools.pathManager as PathTools
+import tools.settingsManager as SettingTools
 
 modules_and_classes = [
     FileManagerTools,
     OperationsTools,
     LlmTools,
     Environment.MAIN_MEMORY,
-    BrowserTools
+    BrowserTools,
+    PathTools,
+    SettingTools
 ]
 
 
@@ -88,13 +93,26 @@ class Core:
             self.taskExecutionSignal.clear()
 
     def _executeTask(self, task):
+        if Environment.should_function_call == False: return
+
         print("Executing task: ", task["id"], task["fn_name"])
         curr_task_name = task["fn_name"]
         curr_task_kwargs = task["kwargs"]
 
         try:
             function_to_call = self.FUNCTIONS[curr_task_name]
-            function_to_call(**curr_task_kwargs)
+            response = function_to_call(**curr_task_kwargs)
+
+            if isinstance(Environment.MAIN_LLM, GroqLLM):
+                Environment.MAIN_LLM.messages.append({
+                    "role": "tool",
+                    "tool_call_id": task["id"],
+                    "name": task["fn_name"],
+                    "content": response,
+                })
+                response = None
+
+            Environment.MAIN_LLM.sendPrompt(response)
         except Exception as e:
             print(e)
 
@@ -102,26 +120,47 @@ class Core:
 
     # Public functions
     def createTask(self, response):
-        if isinstance(Environment.MAIN_LLM, GroqLLM):
-            print(response)
-            MAIN_SPEECH.speak(response.content)
-            return 
-        
-        for part in response.parts:
-            if fn := part.function_call:    
-                kwargs = {}
-                for key, val in fn.args.items():
-                    kwargs[key] = val
-                task = {
-                    "id": uuid.uuid4(),
-                    "fn_name": fn.name,
-                    "kwargs": kwargs
-                }
-                self.addTask(task)
+        try:
+            text_data = None
+
+            if isinstance(Environment.MAIN_LLM, GroqLLM):
+                text = response.choices[0].message.content
+                tools = response.choices[0].message.tool_calls
+
+                if tools: 
+                    for tool in tools:
+                        task = {
+                            "id": tool.id,
+                            "fn_name": tool.function.name,
+                            "kwargs": json.loads(tool.function.arguments)
+                        }
+                        self.addTask(task)
+                if text:
+                    print("\n[Beta-1]: ", text)
+                    text_data = text
             
-            elif fn := part.text:
-                print("\n[Beta-1]: ", fn.format())
-                MAIN_SPEECH.speak(fn.format())
+            elif isinstance(Environment.MAIN_LLM, GoogleLLM):
+                for part in response.parts:
+                    if fn := part.function_call:    
+                        kwargs = {}
+                        for key, val in fn.args.items():
+                            kwargs[key] = val
+                        task = {
+                            "id": uuid.uuid4(),
+                            "fn_name": fn.name,
+                            "kwargs": kwargs
+                        }
+                        self.addTask(task)
+                    
+                    elif fn := part.text:
+                        print("\n[Beta-1]: ", fn.format())
+                        text_data = fn.format()
+
+            MAIN_SPEECH.speak(text_data)
+        
+        except Exception as e:
+            print(e)
+
 
     def addTask(self, task):
         self.task_queue.put(task)

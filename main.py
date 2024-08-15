@@ -2,7 +2,7 @@
 from modules.core import Core
 from modules.llm import GroqLLM, GoogleLLM
 from modules.logger import MAIN_LOGGER
-from modules.system import System
+from modules.system import Environment
 from modules.memory import KnowledgeBase
 
 
@@ -21,22 +21,25 @@ class BetaEnvironment:
         llm = GroqLLM()
         mem = KnowledgeBase()
 
-        self.Environment = System()
-        self.Environment.setLLMModel(llm)
-        self.Environment.setMemory(mem)
+        Environment.setLLMModel(llm)
+        Environment.setMemory(mem)
         core = Core()
 
+        print(f"\n{Environment.getSettings()}")
         MAIN_LOGGER.info("Beta-1 Environment initialized successfully")
 
 
     def run(self):
         while True:
-            # prompt = MAIN_LLM.takeTextInput()
             prompt = input("Prompt: ")
             if prompt == "exit":
                 break
-
-            response = self.Environment.MAIN_LLM.sendPrompt(prompt)
+            elif prompt == "~settings":
+                print(Environment.getSettings())
+            elif prompt == "~user":
+                print(Environment.getUserDetails())
+            else:
+                response = Environment.MAIN_LLM.sendPrompt(prompt)
             
 
 
